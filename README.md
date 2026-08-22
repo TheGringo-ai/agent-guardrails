@@ -2,8 +2,13 @@
 
 **Stop telling your AI coding agent what not to do. Make it structurally unable to.**
 
-A ~150-line `PreToolUse` hook that matches an agent's *proposed* tool call against a rules
+A small `PreToolUse` hook that matches an agent's *proposed* tool call against a rules
 file and blocks or escalates **before** the call runs.
+
+Your rules become a file you can review, version, test, and check into a repo — and every
+block leaves an audit line. If your team is letting coding agents touch real
+infrastructure, this is the smallest thing that turns "we told it not to" into something
+you can actually point at.
 
 ```bash
 echo '{"tool_name":"Bash","tool_input":{"command":"rm -rf /tmp/x"}}' | guardrails/guard.py
@@ -29,7 +34,7 @@ useless for `rm -rf`.
 git clone https://github.com/TheGringo-ai/agent-guardrails
 cd agent-guardrails
 cp guardrails/rules.example.json guardrails/rules.json   # then edit
-python3 tests/test_guard.py                              # 37/37
+python3 tests/test_guard.py                              # 41/41
 ```
 
 Put the directory somewhere **outside any repo you check out or clean** — see
@@ -46,6 +51,44 @@ Put the directory somewhere **outside any repo you check out or clean** — see
   }
 }
 ```
+
+## Start in shadow mode — you don't have any rules yet
+
+The advice everywhere below is *grow rules from real mistakes, not imagined ones*. On day
+one you have no logged mistakes, so that advice is useless to you. Shadow mode is the
+answer: rules observe and log, and block nothing.
+
+```bash
+GUARDRAILS_SHADOW=1        # in your shell profile, or the hook's env
+# ...work normally for a week...
+python3 guardrails/shadow_report.py
+```
+
+```
+  rm-recursive-force  (5 hits, would ask)
+      Bash: rm -rf /tmp/build
+      Bash: rm -rf node_modules
+      Bash: rm -rf dist
+      -> moderate. Check for false positives before promoting.
+```
+
+That output is doing real work. Three of those five are routine build cleanup — so
+enforcing that rule as written would nag you constantly, and a rule that nags gets
+switched off. Now you know that *before* it costs you anything, instead of finding out by
+being interrupted.
+
+Two scopes, answering different questions:
+
+| | question it answers |
+|---|---|
+| `GUARDRAILS_SHADOW=1` | "What would this whole ruleset do to me?" |
+| `"shadow": true` on one rule | "Is my **new** rule too broad?" |
+
+The second is the one you'll use most: a new, unproven rule observes while your
+established rules keep enforcing. That's how a rule earns its way into blocking.
+
+Shadow rules never influence the live verdict — a rule you're still evaluating can't
+accidentally suppress a real block.
 
 ## Writing a rule
 
@@ -70,6 +113,7 @@ Put the directory somewhere **outside any repo you check out or clean** — see
 | `reason` | shown to the agent — write it to persuade, not just to refuse |
 | `doc` | optional rationale file surfaced with the block |
 | `path_scope` | optional; narrows the rule to files under a subpath |
+| `shadow` | optional; `true` = observe and log only, never block |
 
 `deny` beats `ask`: all rules are evaluated and the strongest verdict wins.
 
@@ -104,12 +148,33 @@ Full write-up — three years of mistake-logging, one week of turning it into ma
 ```
 $ python3 tests/test_guard.py
 ...
-37/37 passed
+41/41 passed
 ```
 
 Includes deny-cases, matching allow-cases, wrapped-command bypasses
 (`time …`, `FOO=1 …`, `sudo …`, `… && …`, `bash -c "…"`, subshells, later lines), and
-fail-open guarantees for garbage payloads and a missing rules file.
+fail-open guarantees for garbage payloads and a missing rules file, plus shadow-mode
+behaviour (a shadowed rule must not block, and must not suppress an enforcing one).
+
+## For teams
+
+A rules file is org policy for agents, in a form you can actually enforce and review:
+
+- **Check `rules.json` into the repo.** Policy travels with the codebase and changes go
+  through code review like anything else.
+- **Point `doc` at your rationale.** The agent surfaces it in the block message, so a
+  block explains itself instead of just refusing. New joiners read the same document.
+- **The log is the audit trail.** Every block and every shadow hit is a timestamped line:
+  what was attempted, which rule caught it, when.
+- **Roll out in shadow first.** Ship a policy to the team observing-only, collect a week
+  of `shadow_report.py` output across everyone, and promote the rules that proved
+  themselves. Enforcing an untested ruleset across a team is how you get it disabled
+  team-wide on day two.
+
+The honest limit: this is a **regex matcher on tool input**, not a sandbox. It stops
+mistakes, not a determined adversary — anyone who wants to get around a pattern can. Treat
+it as the guardrail on the stairs, not the lock on the vault. If you need real containment,
+you need actual isolation, and this sits alongside that rather than replacing it.
 
 ## Author
 

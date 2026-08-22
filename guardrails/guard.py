@@ -53,6 +53,21 @@ LOG_FILE = Path(os.environ.get("GUARDRAILS_LOG", Path.home() / ".agent-guardrail
 # the agent (and you) can see WHY a rule exists, not just that it fired.
 DOCS_DIR = os.environ.get("GUARDRAILS_DOCS", "")
 
+# Shadow mode: evaluate rules and LOG what they would have done, but never block.
+#
+# This exists because the central claim of this project — that false positives are the
+# primary risk — is useless if you can only discover a false positive by being blocked by
+# it. Shadow mode lets you measure a rule's real-world hit rate against your own working
+# habits *before* it can cost you anything.
+#
+# Two scopes, because they answer different questions:
+#   GUARDRAILS_SHADOW=1        → everything observes. "What would this ruleset do to me?"
+#   "shadow": true on a rule   → that rule alone observes. "Is my NEW rule too broad?"
+#
+# The second is the one you will use most: it lets a new, unproven rule run alongside
+# established enforcing ones, which is how a rule should earn its way into blocking.
+SHADOW_ALL = os.environ.get("GUARDRAILS_SHADOW", "").strip() not in ("", "0", "false", "no")
+
 
 def _log(msg: str) -> None:
     """Record guard failures and every block. Must never raise."""
@@ -173,8 +188,23 @@ def main() -> None:
     if not hits:
         sys.exit(0)
 
-    denies = [r for r in hits if r.get("decision") == "deny"]
-    chosen = denies[0] if denies else hits[0]
+    # Shadow rules must not influence the live verdict at all — otherwise a rule you are
+    # still evaluating could suppress a real block by winning the "strongest verdict"
+    # contest. Split them out before choosing.
+    shadow_hits = [r for r in hits if SHADOW_ALL or r.get("shadow")]
+    live_hits = [] if SHADOW_ALL else [r for r in hits if not r.get("shadow")]
+
+    snippet = (hay["command"] or hay["path"])[:160].replace("\n", " ")
+
+    for r in shadow_hits:
+        would = "deny" if r.get("decision") == "deny" else "ask"
+        _log(f"SHADOW would-{would} [{r.get('id')}] {tool}: {snippet}")
+
+    if not live_hits:
+        sys.exit(0)                            # only shadow rules matched → allow
+
+    denies = [r for r in live_hits if r.get("decision") == "deny"]
+    chosen = denies[0] if denies else live_hits[0]
     decision = "deny" if denies else "ask"
 
     reason = f"[{chosen.get('id')}] {chosen.get('reason', 'Blocked by guard rule.')}"
@@ -186,7 +216,6 @@ def main() -> None:
             "of the same action — explain the block to the user and ask how to proceed."
         )
 
-    snippet = (hay["command"] or hay["path"])[:160].replace("\n", " ")
     _log(f"{decision.upper()} [{chosen.get('id')}] {tool}: {snippet}")
 
     _emit(decision, reason)
