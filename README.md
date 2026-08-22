@@ -116,10 +116,8 @@ fail-open guarantees for garbage payloads and a missing rules file.
 By **Fred Taylor** — [thegringo.ai](https://thegringo.ai). This runs on my own machine
 every day, against a real 27-repo working tree. It is new; the mistake log behind it is not.
 
-<!-- FRED: fill in your actual years/role before publishing. The analogy below is the
-     strongest thing you have and it is worth stating precisely — but state it truthfully. -->
-Years on plant floors in food manufacturing before I wrote production code, which is where
-the bias in this project comes from: a safety interlock that trips constantly gets
+A decade on plant floors in food manufacturing before I wrote production code, which is
+where the bias in this project comes from: a safety interlock that trips constantly gets
 bypassed, and an interlock everyone bypasses is worse than none — because it still looks
 like protection. That is the same failure mode as a noisy guardrail, and it is why this
 project treats false positives as the primary risk rather than an annoyance.

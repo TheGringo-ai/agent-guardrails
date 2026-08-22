@@ -152,6 +152,21 @@ into a rubber stamp at once.
 **A false positive is not a small bug in a safety system. It is the mechanism by which
 safety systems get switched off.**
 
+I spent a decade on plant floors in food manufacturing before I wrote production code, and
+this is the one lesson that transferred intact. Every plant has an interlock somebody has
+learned to work around — a guard that trips on a normal operation, a sensor that false-
+trips on start-up, a light curtain positioned where operators have to break it forty times
+a shift. Nobody decides to defeat a safety system. They defeat one nuisance trip, and then
+another, and the bypass becomes the procedure.
+
+The dangerous state isn't an unguarded machine. Everyone treats an unguarded machine with
+respect. The dangerous state is a *guarded* machine whose guard everyone has quietly
+learned to ignore — because now the protection is assumed and absent at the same time.
+
+That is exactly what a noisy guardrail does to an engineer. Which is why "a false deny
+costs more than a missed catch" is the first design commitment in this project, and why
+the allow-cases matter more than the deny-cases.
+
 ## What I would tell someone starting
 
 1. **Fail open.** Non-negotiable. Log everything.
