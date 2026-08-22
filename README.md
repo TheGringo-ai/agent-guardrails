@@ -26,7 +26,7 @@ useless for `rm -rf`.
 ## Install
 
 ```bash
-git clone https://github.com/YOURNAME/agent-guardrails
+git clone https://github.com/TheGringo-ai/agent-guardrails
 cd agent-guardrails
 cp guardrails/rules.example.json guardrails/rules.json   # then edit
 python3 tests/test_guard.py                              # 37/37
@@ -84,7 +84,7 @@ it, and, far worse, it blocked copying the protected data to a **local backup dr
 guard was blocking the remedy rather than the risk. Nothing caught it because no test
 asserted that anything should be *allowed*.
 
-Writing the allow-cases for this repo also surfaced a months-old bug where
+Writing the allow-cases for this repo also surfaced a bug where
 `git push --force-with-lease` — the *safe* form — prompted every time, because a negative
 lookahead sat in the wrong position. Prompting on safe operations is not harmless: it
 trains you to click through prompts, which destroys the value of the ones that matter.
@@ -96,7 +96,8 @@ trains you to click through prompts, which destroys the value of the ones that m
 - **High signal over high coverage.** A false deny costs more trust than a missed catch.
 - **Rules grow from real mistakes**, not imagined ones.
 
-Full write-up of what three years of running this taught us: [docs/LESSONS.md](docs/LESSONS.md)
+Full write-up — three years of mistake-logging, one week of turning it into machinery:
+[docs/LESSONS.md](docs/LESSONS.md) · [WRITEUP.md](WRITEUP.md)
 
 ## Tests
 
@@ -110,6 +111,19 @@ Includes deny-cases, matching allow-cases, wrapped-command bypasses
 (`time …`, `FOO=1 …`, `sudo …`, `… && …`, `bash -c "…"`, subshells, later lines), and
 fail-open guarantees for garbage payloads and a missing rules file.
 
+## Author
+
+By **Fred Taylor** — [thegringo.ai](https://thegringo.ai). This runs on my own machine
+every day, against a real 27-repo working tree. It is new; the mistake log behind it is not.
+
+<!-- FRED: fill in your actual years/role before publishing. The analogy below is the
+     strongest thing you have and it is worth stating precisely — but state it truthfully. -->
+Years on plant floors in food manufacturing before I wrote production code, which is where
+the bias in this project comes from: a safety interlock that trips constantly gets
+bypassed, and an interlock everyone bypasses is worse than none — because it still looks
+like protection. That is the same failure mode as a noisy guardrail, and it is why this
+project treats false positives as the primary risk rather than an annoyance.
+
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).

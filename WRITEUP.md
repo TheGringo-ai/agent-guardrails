@@ -1,20 +1,26 @@
 # The guardrail that blocked its own fix
 
-*What three years of AI-assisted development, 114 logged mistakes, and one very stubborn
-regex taught me about constraining coding agents.*
+*Three years of AI-assisted development gave me a 114-entry mistake log. Turning that log
+into machinery took a week — and the first week broke in ways the log never predicted.*
+
+**Fred Taylor** · [thegringo.ai](https://thegringo.ai) · [github.com/TheGringo-ai](https://github.com/TheGringo-ai)
 
 ---
 
-I have been building with AI coding assistants since well before it was a normal thing to
-do. Somewhere in year two I stopped counting features and started counting mistakes. The
-count is currently 114 — each one written down, with what happened, how it was caught, and
-what would have prevented it.
+I have been building with AI coding assistants for about three years. Somewhere along the
+way I stopped counting features and started counting mistakes. The count is currently 114
+— each one written down, with what happened, how it was caught, and what would have
+prevented it.
 
 That log is the most valuable artifact I own. Not because the mistakes are interesting
 individually — most are mundane — but because writing them down forced a conclusion I
 resisted for a long time:
 
 **You cannot fix a class of mistake by telling the model not to make it.**
+
+So a week ago I stopped writing rules in prose and started writing them as machinery. This
+is a report on that week. It is deliberately short on theory: everything below either
+happened or was found by a test, and I have tried to be precise about which.
 
 ## Instructions are a preference; hooks are machinery
 
@@ -98,7 +104,7 @@ no concept of local versus remote.
 The guard was blocking the fix, not the risk. The one directory I most needed a second
 copy of was the one directory my own safety system prevented me from backing up.
 
-It had been that way for weeks and nothing caught it — because every test I had written
+Nothing caught it — because every test I had written
 asserted that something should be **blocked**. Not one asserted that anything should be
 **allowed**.
 
@@ -137,7 +143,7 @@ FIXED:   \bgit\s+push\b[^|;&\n]*(--force(?!-with-lease)|-f\b)
 
 `--force\b` matches *inside* `--force-with-lease` — the hyphen is a word boundary — so the
 trailing lookahead was evaluated at the wrong position entirely. Result:
-`--force-with-lease`, the **safe** form, prompted every single time. For months.
+`--force-with-lease`, the **safe** form, prompted every single time.
 
 That is not cosmetic. Prompting on safe operations trains you to click through prompts.
 Prompt fatigue doesn't weaken your guardrails gradually — it converts every one of them
@@ -175,5 +181,5 @@ yourself.
 
 ---
 
-*Code: [agent-guardrails](https://github.com/YOURNAME/agent-guardrails) — MIT.
+*Code: [agent-guardrails](https://github.com/TheGringo-ai/agent-guardrails) — MIT.
 Full lessons: [docs/LESSONS.md](docs/LESSONS.md).*

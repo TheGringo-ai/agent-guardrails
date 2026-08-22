@@ -1,6 +1,6 @@
 # Lessons
 
-Every one of these came from something going wrong in production use, not from design.
+Every one of these came from something actually going wrong, not from design.
 They are ordered by how much pain they caused.
 
 ---
@@ -69,7 +69,7 @@ anchor. Consequences:
   blocked copying that data to a *locally attached backup drive*. **The guard was blocking
   the remedy**, not the risk.
 
-Nobody noticed for weeks, because there was no test asserting anything should be allowed.
+Nobody noticed, because there was no test asserting anything should be allowed.
 
 The fix was a command-position anchor plus an explicit local-destination exemption:
 
@@ -100,7 +100,7 @@ the **safe** form, prompted every time.
 That is not a harmless bug. Prompting on safe operations trains the human to click
 through prompts, which destroys the value of the ones that matter.
 
-This bug had been live for months. An allow-case caught it in the first test run.
+An allow-case caught it in the first test run.
 
 ## 7. Keep one canonical copy of the rules
 
