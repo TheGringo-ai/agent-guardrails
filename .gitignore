@@ -1,0 +1,13 @@
+# YOUR ACTUAL RULES ARE PRIVATE.
+# rules.example.json is the shipped template; rules.json is yours and will contain the
+# real names of directories you are protecting. Committing it would publish exactly the
+# list of things you most want kept quiet.
+guardrails/rules.json
+
+# Local guard log — records every block, including command snippets.
+*.log
+.agent-guardrails/
+
+__pycache__/
+*.pyc
+.DS_Store

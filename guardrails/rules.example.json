@@ -1,0 +1,80 @@
+{
+  "_comment": "Starter rules. Copy to rules.json and edit. Keep patterns HIGH-SIGNAL: a false deny costs more trust than a missed catch, because a guard that cries wolf gets switched off — and then it protects nothing. Grow this file from real mistakes, not imagined ones.",
+  "_targets": "command = Bash tool_input.command | path = file_path | content = text being written | action = command+path (NOT content — use this for protected-resource rules so writing docs ABOUT them doesn't trip the guard) | any = everything",
+  "_decisions": "deny = hard block, for irreversible or externally-consequential actions. ask = routed to the human, for risky-but-legitimate ones.",
+  "rules": [
+    {
+      "id": "rm-recursive-force",
+      "tools": ["Bash"],
+      "target": "command",
+      "pattern": "\\brm\\b(?=[^|;&\\n]*\\s-[^\\s]*r)(?=[^|;&\\n]*\\s-[^\\s]*f)",
+      "decision": "ask",
+      "reason": "Recursive force-delete. Confirm the exact target before running it.",
+      "doc": "destructive-commands.md"
+    },
+    {
+      "id": "git-add-all",
+      "tools": ["Bash"],
+      "target": "command",
+      "pattern": "\\bgit\\s+add\\s+(-A\\b|--all\\b|\\.(\\s|$))",
+      "decision": "ask",
+      "reason": "'git add -A/.' sweeps in unrelated work and races any background process that commits. Stage explicit paths instead.",
+      "doc": null
+    },
+    {
+      "id": "git-force-push",
+      "tools": ["Bash"],
+      "target": "command",
+      "pattern": "\\bgit\\s+push\\b[^|;&\\n]*(--force(?!-with-lease)|-f\\b)",
+      "decision": "ask",
+      "reason": "Force-push rewrites published history. Confirm the branch, and that nobody else's work is on it. (--force-with-lease is deliberately exempt.)",
+      "doc": null
+    },
+    {
+      "id": "git-discard-uncommitted",
+      "tools": ["Bash"],
+      "target": "command",
+      "pattern": "\\bgit\\s+(reset\\s+--hard|checkout\\s+--\\s+\\.|clean\\s+-[a-z]*f|stash\\s+(drop|clear))",
+      "decision": "ask",
+      "reason": "Destroys uncommitted work irreversibly. Confirm, or stash to a named branch first.",
+      "doc": null
+    },
+    {
+      "id": "secret-manager-delete",
+      "tools": ["Bash"],
+      "target": "command",
+      "pattern": "(gcloud\\s+secrets\\s+delete|aws\\s+secretsmanager\\s+delete-secret|vault\\s+kv\\s+delete)",
+      "decision": "ask",
+      "reason": "Deleting a managed secret is irreversible and silently breaks live services. Back the value up and grep for usages first.",
+      "doc": null
+    },
+    {
+      "id": "protected-path-exfiltration",
+      "tools": ["Bash"],
+      "target": "command",
+      "pattern": "(^|[;|&(\"'\\n])[ \\t]*((sudo|time|nohup|env|caffeinate|command|xargs)[ \\t]+|[A-Za-z_][A-Za-z0-9_]*=[^ \\t]*[ \\t]+)*(curl|wget|scp|gsutil|rsync|gcloud[ \\t]+storage|gh[ \\t]+(gist|release)|aws[ \\t]+s3)(?![^|;&\\n]*/Volumes/)[^|;&\\n]*(SENSITIVE_DIR_NAME|ANOTHER_PROTECTED_DIR)",
+      "decision": "deny",
+      "reason": "This directory is air-gapped by policy — its contents never leave this machine. Replace SENSITIVE_DIR_NAME with your own protected directory names.",
+      "doc": "air-gapped-data.md"
+    },
+    {
+      "id": "protected-path-destroy",
+      "tools": ["Bash"],
+      "target": "command",
+      "pattern": "(\\brm\\b|\\bmv\\b|\\btrash\\b)[^|;&\\n]*(SENSITIVE_DIR_NAME|ANOTHER_PROTECTED_DIR)",
+      "decision": "deny",
+      "reason": "This data is under a preservation obligation. Deleting or moving it is never correct.",
+      "doc": "air-gapped-data.md"
+    },
+    {
+      "id": "permissive-license-in-private-repo",
+      "tools": ["Write", "Edit", "MultiEdit"],
+      "target": "content",
+      "pattern": "(MIT License|Apache License|Permission is hereby granted, free of charge)",
+      "path_scope": "private-repos/",
+      "decision": "ask",
+      "reason": "This tree holds proprietary code. Never scaffold a permissive license into it — and fix the README prose too, not just the LICENSE file.",
+      "doc": null
+    }
+  ]
+}
