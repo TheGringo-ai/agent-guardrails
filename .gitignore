@@ -11,3 +11,8 @@ guardrails/rules.json
 __pycache__/
 *.pyc
 .DS_Store
+
+# Secrets — never commit env files (2026-09-20)
+.env
+.env.*
+!.env.example
